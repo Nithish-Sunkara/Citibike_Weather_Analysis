@@ -1,0 +1,100 @@
+USE citibike_db;
+
+-- KPI 1: Total Ridership
+SELECT COUNT(*) AS total_rides
+FROM citibike_staging;
+
+-- KPI 2: Average Trip Duration
+SELECT ROUND(AVG(trip_duration)/60,2) AS avg_trip_duration_minutes
+FROM citibike_staging;
+
+-- KPI 3: Peak Usage Hour
+SELECT start_hour, COUNT(*) AS ride_count
+FROM citibike_staging
+GROUP BY start_hour
+ORDER BY ride_count DESC
+LIMIT 1;
+
+-- KPI 4: Seasonal Ride Distribution
+SELECT 
+    season,
+    COUNT(*) AS ride_count,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS percentage_share
+FROM citibike_staging
+GROUP BY season;
+
+-- KPI 5: User Type Distribution
+SELECT 
+    user_type,
+    COUNT(*) AS ride_count,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS percentage_share
+FROM citibike_staging
+GROUP BY user_type;
+
+-- KPI 6: Avg Duration by User Type
+SELECT 
+    user_type,
+    ROUND(AVG(trip_duration)/60,2) AS avg_duration_minutes
+FROM citibike_staging
+GROUP BY user_type;
+
+-- KPI 7: Top 10 Start Stations
+SELECT start_station_name, COUNT(*) AS pickups
+FROM citibike_staging
+GROUP BY start_station_name
+ORDER BY pickups DESC
+LIMIT 10;
+
+-- KPI 8: Station Imbalance (Net Flow)
+SELECT 
+    s.station,
+    s.pickups,
+    COALESCE(d.dropoffs,0) AS dropoffs,
+    (s.pickups - COALESCE(d.dropoffs,0)) AS net_flow
+FROM 
+(
+    SELECT start_station_name AS station, COUNT(*) AS pickups
+    FROM citibike_staging
+    GROUP BY start_station_name
+) s
+LEFT JOIN
+(
+    SELECT end_station_name AS station, COUNT(*) AS dropoffs
+    FROM citibike_staging
+    GROUP BY end_station_name
+) d
+ON s.station = d.station
+ORDER BY ABS(s.pickups - COALESCE(d.dropoffs,0)) DESC
+LIMIT 10;
+
+-- KPI 9: Rain vs No Rain Ride Volume
+SELECT 
+  CASE 
+     WHEN w.precipitation > 0 THEN 'Rainy'
+     ELSE 'No Rain'
+  END AS rain_status,
+  COUNT(*) AS ride_count
+FROM citibike_staging c
+JOIN nyc_weather_staging w
+  ON c.Trip_start_date = w.weather_date
+GROUP BY rain_status;
+
+-- KPI 10: Ridership by Temperature
+SELECT 
+   ROUND(w.Avg_temp,0) AS temp_band,
+   COUNT(*) AS ride_count
+FROM citibike_staging c
+JOIN nyc_weather_staging w
+  ON c.Trip_start_date = w.weather_date
+GROUP BY temp_band
+ORDER BY temp_band;
+
+-- KPI 11: Rain Sensitivity by User Type
+SELECT 
+  c.user_type,
+  CASE WHEN w.precipitation > 0 THEN 'Rainy' ELSE 'No Rain' END AS rain_status,
+  COUNT(*) AS ride_count
+FROM citibike_staging c
+JOIN nyc_weather_staging w
+  ON c.Trip_start_date = w.weather_date
+GROUP BY c.user_type, rain_status;
