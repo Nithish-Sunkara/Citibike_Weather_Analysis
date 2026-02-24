@@ -20,7 +20,7 @@ The goal is to support operational planning, demand forecasting, and bike redist
 
 # 🧠 Business Problem & Impact
 
-Urban bike-sharing systems generate millions of records daily, but raw data alone does not answer:
+Urban bike-sharing systems generate millions of records daily, but raw operational data alone does not answer:
 
 - When does demand peak?
 - Which stations experience imbalance?
@@ -54,7 +54,7 @@ This project builds a validated analytical framework that converts trip-level da
 
 Structured workflow:
 
-Raw Data → Staging → Cleaning → Validation → Analysis → KPI Layer → Power BI Reports
+Raw Data → Staging → Cleaning → Validation → Analysis → KPI Queries → Power BI Reports
 
 ---
 
@@ -65,17 +65,36 @@ Raw Data → Staging → Cleaning → Validation → Analysis → KPI Layer → 
 - NYC daily weather dataset  
 
 ### Staging
+Performed structured transformations including:
+
 - Column normalization  
 - Data type corrections (TEXT → DATE, DATETIME, DECIMAL, YEAR)  
-- Date/time extraction  
-- Hour, weekday, month, season derivation  
+- Text standardization  
+- Date and time extraction  
 
-### Feature Engineering
-- Average temperature calculation  
+Derived fields created:
+- Trip_start_date  
+- Trip_start_time  
+- start_hour  
+- day_of_week  
+- month  
+- season  
+- weekday_num  
+
+---
+
+## 🔧 Derived Columns & Transformations (SQL)
+
+Additional analytical fields were created within the staging layer to support KPI and reporting logic:
+
+- Average temperature calculation `(max_temp + min_temp) / 2`  
 - Rain classification  
 - Rider age derivation  
-- Station pickup/dropoff aggregation  
-- Net flow & imbalance metrics  
+- Recalculated trip_duration using timestamp difference  
+- Station pickup and dropoff aggregations  
+- Net flow and imbalance metrics  
+
+These derived columns enabled time-series, segmentation, and operational analysis in Power BI.
 
 ---
 
@@ -87,11 +106,13 @@ Performed integrity checks including:
 - Invalid birth year correction  
 - Null station ID removal  
 - Outlier removal (> 24 hours)  
-- Recalculated trip_duration from timestamps  
-- Timestamp validation  
-- Null audits  
+- Timestamp consistency validation  
+- Null audits across columns  
 - Weather duplicate checks  
+- Negative precipitation validation  
 - Join completeness validation  
+
+Final dataset integrity verified via row counts and consistency checks.
 
 ---
 
@@ -109,7 +130,7 @@ Ensured stable execution of large aggregation queries.
 
 # 📊 SQL Analytical Coverage
 
-Analysis includes:
+Analysis queries were written to evaluate:
 
 - Total rides  
 - Average trip duration  
@@ -123,6 +144,7 @@ Analysis includes:
 - Weather impact  
 - Rain impact by user type  
 - Trip duration vs temperature  
+- Seasonal ride distribution  
 
 ---
 
@@ -133,8 +155,6 @@ Data retrieved via ODBC from MySQL and modeled using a star schema.
 ---
 
 ## 📸 Report Preview
-
-*(Place screenshots in a `/docs` folder)*
 
 ### 1️⃣ Ridership Overview
 ![Ridership Overview](docs/report_01_ridership_overview.png)
@@ -196,7 +216,7 @@ Power BI will rebuild the reports.
 - Large-scale data handling (9M+ records)  
 - Structured SQL pipeline design  
 - Data cleaning & validation  
-- Feature engineering  
+- Derived column creation & transformation  
 - Analytical SQL querying  
 - KPI construction  
 - ODBC integration  
