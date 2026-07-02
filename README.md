@@ -333,7 +333,5 @@ Download the datasets using the links provided below.
 
 **Nithish Sunkara**
 
-Master's in Information Science  
-Ind
 **LinkedIn:** https://linkedin.com/in/nsunkara01
 
